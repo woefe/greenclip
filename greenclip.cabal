@@ -38,6 +38,7 @@ executable greenclip
     , directory
     , unix
     , directory
+    , filepath
     , wordexp
     , X11 >= 1.6
   other-modules:
