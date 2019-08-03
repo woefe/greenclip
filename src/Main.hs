@@ -113,11 +113,11 @@ setHistoryFilePermission :: (MonadIO m, MonadReader Config m) => m ()
 setHistoryFilePermission = do
   storePath <- view $ to historyPath
   fileExist <- liftIO $ Dir.doesFileExist storePath
-  when (not fileExist) (storeHistory mempty)
+  unless fileExist (storeHistory mempty)
   liftIO $ setFileMode storePath 0o600
 
 runDaemon:: (MonadIO m, MonadCatch m, MonadReader Config m) => m ()
-runDaemon = setHistoryFilePermission >> (forever $ go `catchAll` handleError)
+runDaemon = setHistoryFilePermission >> forever (go `catchAll` handleError)
   where
     _0_5sec :: Int
     _0_5sec = 5 * 100000
@@ -204,8 +204,7 @@ getHash = toS . fromMaybe mempty . lastMay . T.split (== ' ')
 printHistoryForRofi :: (MonadIO m, MonadReader Config m) => m ()
 printHistoryForRofi = do
   history <- mappend <$> getHistory <*> getStaticHistory
-  _ <- traverse (putStrLn . toRofiStr) history
-  return ()
+  traverse_ (putStrLn . toRofiStr) history
 
 
 advertiseSelection :: (MonadIO m, MonadReader Config m) => Text -> m ()
@@ -255,7 +254,6 @@ writeConfig :: FilePath -> Config -> IO ()
 writeConfig cfgPath cfg =
   let prettyCfg = show cfg & T.replace "," ",\n" . T.replace "{" "{\n " . T.replace "}" "\n}"
   in writeFile cfgPath prettyCfg
-
 
 
 parseArgs :: [Text] -> Command
