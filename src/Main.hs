@@ -27,7 +27,6 @@ import           System.Environment    (lookupEnv)
 import           System.IO             (IOMode (..), hClose, hGetContents,
                                         openFile)
 import           System.Timeout        (timeout)
-import           System.Wordexp.Simple (wordexp)
 
 import qualified Clipboard             as Clip
 
@@ -214,6 +213,11 @@ advertiseSelection txt = do
   liftIO $ Clip.setClipboardSelection selection
 
 
+expandUser :: FilePath -> IO FilePath
+expandUser ('~':'/':str) = (</> str) <$> Dir.getHomeDirectory
+expandUser str = return str
+
+
 getConfig :: FilePath -> IO Config
 getConfig cfgPath = do
   cfgStr <- readFile cfgPath `catchAll` const mempty
@@ -236,7 +240,7 @@ getConfig cfgPath = do
 
   where
     defaultConfig = Config 50 "~/.cache/greenclip.history" "~/.cache/greenclip.staticHistory" "/tmp/greenclip/" False [] True
-    expandHomeDir str = (fromMaybe str . listToMaybe <$> wordexp str) `catchAll` (\_ -> return str)
+    expandHomeDir str = expandUser str `catchAll` (\_ -> return str)
 
 
 prepareDirs :: Config -> IO ()
