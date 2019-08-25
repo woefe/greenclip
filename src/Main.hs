@@ -228,6 +228,7 @@ getConfig cfgPath = do
                       else T.replace "}" ", trimSpaceFromSelection = True }" unprettyCfg'
   let cfgMaybe = readMaybe $ toS unprettyCfg
   let cfg = fromMaybe defaultConfig cfgMaybe
+  when (isNothing cfgMaybe) $ putStrLn ("Could not parse config. Falling back to default config."::Text)
 
   historyPath' <- expandHomeDir $ cfg ^. to historyPath
   staticHistoryPath' <- expandHomeDir $ cfg ^. to staticHistoryPath
@@ -270,10 +271,10 @@ parseArgs _              = HELP
 run :: Command -> IO ()
 run cmd = do
   cfgPath <- (</> ".config/greenclip.cfg") <$> Dir.getHomeDirectory
-
+  cfgPathExists <- Dir.doesFileExist cfgPath
   cfg <- getConfig cfgPath
   prepareDirs cfg
-  writeConfig cfgPath cfg
+  unless cfgPathExists $ writeConfig cfgPath cfg
 
   case cmd of
     DAEMON   -> runReaderT runDaemon cfg
